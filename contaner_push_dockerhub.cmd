@@ -1,1 +1,1 @@
-docker push itksystem/auth-service:latest
+docker push itksystem/warehouse-service:latest

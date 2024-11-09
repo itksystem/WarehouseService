@@ -1,1 +1,1 @@
-docker build -t itksystem/auth-service .
+docker build -t itksystem/warehouse-service .
