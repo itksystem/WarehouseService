@@ -39,39 +39,26 @@ exports.getProductById = async (req, res) => {
 };
 
 exports.getProductsByCategories = async (req, res) => {
-  let  categories = req.body.categories;
-
-  // Проверка на наличие категорий в запросе
-  if (!Array.isArray(categories) || categories.length === 0) {
-   // return res.status(400).json({ message: 'Invalid categories array or empty categories.' });
-   categories = null;
+  let  categories = req.body.categories;  
+  if (!Array.isArray(categories) || categories.length === 0) {  // Проверка на наличие категорий в запросе
+      categories = null;
   }
-
-  try {
-    // Получаем список продуктов по категориям
-    const items = await warehouseHelper.findProductsByCategories(categories);
-
-    // Асинхронно загружаем медиафайлы для каждого продукта
-    const itemsWithMedia = await Promise.all(
+  try {   
+    const items = await warehouseHelper.findProductsByCategories(categories);  // Получаем список продуктов по категориям
+    const itemsWithMedia = await Promise.all( // Асинхронно загружаем медиафайлы для каждого продукта
       items.map(async (item) => {
-        try {
-          // Загружаем медиафайлы для продукта
+        try { // Загружаем медиафайлы для продукта          
           item.media = await warehouseHelper.findMediaByProductId(item.product_id);
-        } catch (mediaError) {
-          // Логируем ошибку загрузки медиафайлов, но продолжаем обработку других продуктов
+        } catch (mediaError) { // Логируем ошибку загрузки медиафайлов, но продолжаем обработку других продуктов          
           console.error(`Error fetching media for product_id ${item.product_id}: ${mediaError.message}`);
           item.media = [];  // Если ошибка загрузки медиафайлов, оставляем пустой массив
         }
         return item;
       })
-    );
-
-    // Отправляем ответ с продуктами и медиафайлами
-    res.status(200).json(itemsWithMedia);
-
+    );    
+    res.status(200).json(itemsWithMedia); // Отправляем ответ с продуктами и медиафайлами
   } catch (error) {
-    // Обработка ошибок на уровне всего запроса
-    console.error('Error fetching products by categories:', error.message);
+    console.error('Error fetching products by categories:', error.message); // Обработка ошибок на уровне всего запроса
     res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
 };
@@ -101,3 +88,4 @@ exports.productReleaseReservation = async (req, res) => {
     res.status(500).json({status : false, productId : productId, count : count, message: error });
   }
 };
+
