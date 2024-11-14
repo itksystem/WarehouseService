@@ -55,14 +55,32 @@ exports.addItemToBasket = async (req, res) => {
     }
 };
 
+
+function calculateTotal(items) {
+    // Проверяем, есть ли товары в корзине
+    if (!items|| !Array.isArray(items)) return 0;    
+    let totalAmount = 0; // Инициализируем переменную для хранения общей суммы    
+    items.forEach(item => { // Проходим по каждому товару в корзине
+        // Проверяем, что у товара есть цена и количество
+        if (item.price && item.quantity) {
+            // Увеличиваем общую сумму
+            totalAmount += item.price * item.quantity;
+        }
+    });
+  
+    return totalAmount;
+  }
+
 exports.getBasket = async (req, res) => {
     const userId = req.user.id;       
     if (!userId) return sendResponse(res, 400, { message: validationError });
     try {
         const items = await basketHelper.getBasket(userId);
+
         sendResponse(res, 200, {
             status: true,
             basket: {items },
+            totalAmount : calculateTotal(items),
         });
     } catch (error) {        
         console.error("Error adding item to basket:", error);
