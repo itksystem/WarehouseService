@@ -6,6 +6,7 @@ const warehouseHelper = require('openfsm-warehouse-helper');
 const common      = require('openfsm-common');  /* Библиотека с общими параметрами */
 const pool        = require('openfsm-database-connection-producer');
 const MailNotificationProducer  =  require('openfsm-mail-notification-producer'); // ходим в почту через шину
+const MediaImageDto = require('openfsm-media-image-dto');
 require('dotenv').config();
 
 const version = '1.0.0'
@@ -37,7 +38,8 @@ exports.getProductsByCategories = async (req, res) => {
     const itemsWithMedia = await Promise.all( // Асинхронно загружаем медиафайлы для каждого продукта
       poducts.map(async (item) => {
         try { // Загружаем медиафайлы для продукта          
-          item.mediaFiles = await warehouseHelper.findMediaByProductId(item.productId);
+          _m_items = await warehouseHelper.findMediaByProductId(item.productId); 
+          item.mediaFiles = _m_items.map(id => new MediaImageDto(id))
         } catch (mediaError) { // Логируем ошибку загрузки медиафайлов, но продолжаем обработку других продуктов          
           console.error(`Error fetching media for product_id ${item.productId}: ${mediaError.message}`);
           item.media = [];  // Если ошибка загрузки медиафайлов, оставляем пустой массив
