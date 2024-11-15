@@ -13,26 +13,14 @@ const version = '1.0.0'
 // найти продукт по id
 exports.getProductById = async (req, res) => {
     const productId = req.params.id;
-
-    // Проверка на валидность productId
-    if (!productId || typeof productId !== 'string' || productId.trim() === '') {
-        return res.status(400).json({ message: 'Product ID is required and must be a valid string.' });
-    }
+    if (!productId || typeof productId !== 'string' || productId.trim() === '') 
+        return res.status(400).json({ message: 'Product ID is required and must be a valid string.' });    
     try {
-        // Пытаемся найти продукт
         const productItem = await warehouseHelper.findProductById(productId);
-
-        // Если продукт не найден
-        if (!productItem) {
-            return res.status(404).json({ message: 'Product not found' });
-        }
-        // Преобразуем данные в DTO
+        if (!productItem)  return res.status(404).json({ message: 'Product not found' });        
         const product = new ProductDTO(productItem);
-
-        // Возвращаем успешный ответ с продуктом
         res.status(200).json(product);
     } catch (error) {
-        // Обработка ошибок на сервере
         console.error('Error fetching product:', error);  // Для логирования ошибки на сервере
         res.status(500).json({ message: 'Internal Server Error', error: error.message });
     }
@@ -45,12 +33,13 @@ exports.getProductsByCategories = async (req, res) => {
   }
   try {   
     const items = await warehouseHelper.findProductsByCategories(categories);  // Получаем список продуктов по категориям
+    let poducts = items.map(id => new ProductDTO(id))
     const itemsWithMedia = await Promise.all( // Асинхронно загружаем медиафайлы для каждого продукта
-      items.map(async (item) => {
+      poducts.map(async (item) => {
         try { // Загружаем медиафайлы для продукта          
-          item.media = await warehouseHelper.findMediaByProductId(item.product_id);
+          item.mediaFiles = await warehouseHelper.findMediaByProductId(item.productId);
         } catch (mediaError) { // Логируем ошибку загрузки медиафайлов, но продолжаем обработку других продуктов          
-          console.error(`Error fetching media for product_id ${item.product_id}: ${mediaError.message}`);
+          console.error(`Error fetching media for product_id ${item.productId}: ${mediaError.message}`);
           item.media = [];  // Если ошибка загрузки медиафайлов, оставляем пустой массив
         }
         return item;

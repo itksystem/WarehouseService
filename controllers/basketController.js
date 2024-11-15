@@ -1,6 +1,7 @@
 const { DateTime }    = require('luxon');
 const basketHelper = require('openfsm-basket-helper');
 const common       = require('openfsm-common');  /* Библиотека с общими параметрами */
+const BasketItemDto   = require('openfsm-basket-item-dto');
 require('dotenv').config();
 
 
@@ -57,13 +58,10 @@ exports.addItemToBasket = async (req, res) => {
 
 
 function calculateTotal(items) {
-    // Проверяем, есть ли товары в корзине
     if (!items|| !Array.isArray(items)) return 0;    
-    let totalAmount = 0; // Инициализируем переменную для хранения общей суммы    
-    items.forEach(item => { // Проходим по каждому товару в корзине
-        // Проверяем, что у товара есть цена и количество
+    let totalAmount = 0; 
+    items.forEach(item => { 
         if (item.price && item.quantity) {
-            // Увеличиваем общую сумму
             totalAmount += item.price * item.quantity;
         }
     });
@@ -76,12 +74,12 @@ exports.getBasket = async (req, res) => {
     if (!userId) return sendResponse(res, 400, { message: validationError });
     try {
         const items = await basketHelper.getBasket(userId);
-
-        sendResponse(res, 200, {
+        sendResponse(res, 200, 
+          {
             status: true,
-            basket: {items },
+            basket: items.map(id => new BasketItemDto(id)),
             totalAmount : calculateTotal(items),
-        });
+          });
     } catch (error) {        
         console.error("Error adding item to basket:", error);
         sendResponse(res, 500, { status: false, message: "Internal server error" });
