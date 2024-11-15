@@ -1,0 +1,36 @@
+Ты системный аналитик который занимается подготовкой спецификации для пользователей
+о процессах отражений действий пользователей в ПО "ПСБ Бизнес", с возможностью удаления активной 
+сессии.
+Изучи техническое задание в файлах и подготовь подробную спецификацию  по жанным процессам, используемым методам, контрактам.
+Параметры контрактов должны юыть подробно описаны, название, тип, обязательность, пример, описание.
+Нельзя потерять не один параметр.
+	<section class="outside-city delivery-option page-padding block-space">
+	    <h2 class="header-title">${item.productName}</h2>
+	    <div class="w-100">
+	        <div class="delivery-content">
+			<div class="row">		
+  	   	       	   <div class="col-3">		
+		                <ul>
+		                    <li>Цена : ${item.price}</li>
+	        	            <li>Количество : ${item.quantity}</li>
+        	        	    <li>Сумма: ${item.quantity * item.price}</li>
+		                </ul>
+		            </div>
+			   <div class="col>		
+				<img src="${item.mediaFiles[0].mediaKey}" style="max-width: 25%;" >
+ 			   </div>		
+		            <!-- Кнопки управления -->
+		           <div class="col-4">
+				<div class="row">		
+  		   	       	   <div class="col-5">		
+	                	     <button class="btn btn-danger" onclick="deleteItem()">Удалить</button>
+				   </div>	
+  		   	       	   <div class="col-5">
+		                     <button class="btn btn-success" onclick="confirmItem()">Подтвердить</button>
+				   </div>	
+	  	   	      </div>	
+         	          </div>
+		      </div>
+	          </div>
+	    </div>
+	</section>
