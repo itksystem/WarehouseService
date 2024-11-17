@@ -1,7 +1,11 @@
 const { DateTime }    = require('luxon');
 const basketHelper = require('openfsm-basket-helper');
+const warehouseHelper = require('openfsm-warehouse-helper');
 const common       = require('openfsm-common');  /* Библиотека с общими параметрами */
+const CommonFunctionHelper = require("openfsm-common-functions")
+const commonFunction= new CommonFunctionHelper();
 const BasketItemDto   = require('openfsm-basket-item-dto');
+const authMiddleware = require('openfsm-middlewares-auth-service'); // middleware для проверки токена
 require('dotenv').config();
 
 
@@ -22,10 +26,10 @@ const sendResponse = (res, statusCode, data) => {
 
 exports.removeItemFromBasket = async (req, res) => {
     let { productId, quantity } = req.body;
-    let userId = req.user.id;
+    const userId = await authMiddleware.getUserId(req, res);
 
     const validationError = validateRequest(productId, quantity, userId);
-    if (validationError) return sendResponse(res, 400, { message: validationError });
+    if (validationError) return sendResponse(res, 400, { message: common.HTTP_CODES.BAD_REQUEST });
     
     try {
         let productCount = await basketHelper.removeItemFromBasket(userId, productId, quantity);
@@ -40,10 +44,10 @@ exports.removeItemFromBasket = async (req, res) => {
 
 exports.addItemToBasket = async (req, res) => {
     const { productId, quantity } = req.body;
-    const userId = req.user.id;
+    const userId = await authMiddleware.getUserId(req, res);
    
     const validationError = validateRequest(productId, quantity, userId);
-    if (validationError) return sendResponse(res, 400, { message: validationError });
+    if (validationError) return sendResponse(res, 400, { message: common.HTTP_CODES.BAD_REQUEST  });
     try {
         const productCount = await basketHelper.addItemToBasket(userId, productId, quantity);
         sendResponse(res, 200, {
@@ -69,15 +73,61 @@ function calculateTotal(items) {
     return totalAmount;
   }
 
-exports.getBasket = async (req, res) => {
-    const userId = req.user.id;       
-    if (!userId) return sendResponse(res, 400, { message: validationError });
+exports.getBasket = async (req, res) => {    
+    const userId = await authMiddleware.getUserId(req, res);
+    if (!userId) return sendResponse(res, 400, { message: common.HTTP_CODES.BAD_REQUEST  });
     try {
         const items = await basketHelper.getBasket(userId);
         sendResponse(res, 200, 
           {
             status: true,
             basket: items.map(id => new BasketItemDto(id)),
+            totalAmount : calculateTotal(items),
+          });
+    } catch (error) {        
+        console.error("Error adding item to basket:", error);
+        sendResponse(res, 500, { status: false, message: "Internal server error" });
+    }
+};
+
+
+exports.orderCreate = async (req, res) => {
+    const userId = await authMiddleware.getUserId(req, res);
+    const {orderId}= req.body;
+    if (!userId) return sendResponse(res, 400, 
+        {
+         message: common.HTTP_CODES.BAD_REQUEST  
+        });
+    if (!orderId) return sendResponse(res, 400, { message: common.HTTP_CODES.BAD_REQUEST  });
+    const data = await basketHelper.getBasket(userId );      // создали заказа  
+    if (!data || (data.length == 0) ) {
+            return sendResponse(res, 400, 
+                { success: false, status: 400, error: commonFunction.getDescriptionByCode(400)}
+            );
+    }
+    try {
+        const result = await basketHelper.orderCreate(userId, orderId );      // создали заказа  
+        const items  = await basketHelper.getBasketOrder(userId, orderId);    // привязали товары в корзине к заказу        
+        const itemsWithResered = await Promise.all( // Асинхронно резервируем товары 
+            items.map(async (item) => {
+              try { 
+                const warehouse  = await warehouseHelper.productReservation(item.productId, item.quantity);                    
+                item.reserved = warehouse;  
+              } catch (reservedError) { 
+                console.error(`Error fetching reserved status for product_id ${item.productId}: ${reservedError.message}`);
+                item.reserved = false;  
+              }
+              return item;
+            })
+          );  
+        if(!result || !items || !itemsWithResered) return sendResponse(res, 500,
+             { success: false, status: 500, error: commonFunction.getDescriptionByCode(error.message)}
+            );
+        sendResponse(res, 200, 
+          {
+            status: true,
+            orderId : orderId,
+            items: items.map(id => new BasketItemDto(id)),
             totalAmount : calculateTotal(items),
           });
     } catch (error) {        

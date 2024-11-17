@@ -1,15 +1,10 @@
-const { DateTime } = require('luxon');
-const userHelper   = require('openfsm-user-helper');
 const ProductDTO      = require('openfsm-product-dto');
-const ProductMediaDTO      = require("openfsm-product-media-dto")
 const warehouseHelper = require('openfsm-warehouse-helper');
+const basketHelper = require('openfsm-basket-helper');
 const common      = require('openfsm-common');  /* Библиотека с общими параметрами */
-const pool        = require('openfsm-database-connection-producer');
-const MailNotificationProducer  =  require('openfsm-mail-notification-producer'); // ходим в почту через шину
+const authMiddleware = require('openfsm-middlewares-auth-service'); // middleware для проверки токена
 const MediaImageDto = require('openfsm-media-image-dto');
 require('dotenv').config();
-
-const version = '1.0.0'
 
 // найти продукт по id
 exports.getProductById = async (req, res) => {
@@ -29,6 +24,7 @@ exports.getProductById = async (req, res) => {
 
 exports.getProductsByCategories = async (req, res) => {
   let  categories = req.body.categories;  
+  let userId = await authMiddleware.getUserId(req, res);
   if (!Array.isArray(categories) || categories.length === 0) {  // Проверка на наличие категорий в запросе
       categories = null;
   }
@@ -38,8 +34,10 @@ exports.getProductsByCategories = async (req, res) => {
     const itemsWithMedia = await Promise.all( // Асинхронно загружаем медиафайлы для каждого продукта
       poducts.map(async (item) => {
         try { // Загружаем медиафайлы для продукта          
-          _m_items = await warehouseHelper.findMediaByProductId(item.productId); 
-          item.mediaFiles = _m_items.map(id => new MediaImageDto(id))
+          mediaTtems = await warehouseHelper.findMediaByProductId(item.productId); 
+          item.mediaFiles = mediaTtems.map(id => new MediaImageDto(id))
+          basketCount = await basketHelper.getProductCountInBasket(userId, item.productId)
+          item.basketCount = basketCount;
         } catch (mediaError) { // Логируем ошибку загрузки медиафайлов, но продолжаем обработку других продуктов          
           console.error(`Error fetching media for product_id ${item.productId}: ${mediaError.message}`);
           item.media = [];  // Если ошибка загрузки медиафайлов, оставляем пустой массив
