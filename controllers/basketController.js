@@ -94,10 +94,7 @@ exports.getBasket = async (req, res) => {
 exports.orderCreate = async (req, res) => {
     const userId = await authMiddleware.getUserId(req, res);
     const {orderId}= req.body;
-    if (!userId) return sendResponse(res, 400, 
-        {
-         message: common.HTTP_CODES.BAD_REQUEST  
-        });
+    if (!userId) return sendResponse(res, 400,  { message: common.HTTP_CODES.BAD_REQUEST  });
     if (!orderId) return sendResponse(res, 400, { message: common.HTTP_CODES.BAD_REQUEST  });
     const data = await basketHelper.getBasket(userId );      // создали заказа  
     if (!data || (data.length == 0) ) {
@@ -123,6 +120,28 @@ exports.orderCreate = async (req, res) => {
         if(!result || !items || !itemsWithResered) return sendResponse(res, 500,
              { success: false, status: 500, error: commonFunction.getDescriptionByCode(error.message)}
             );
+        sendResponse(res, 200, 
+          {
+            status: true,
+            orderId : orderId,
+            items: items.map(id => new BasketItemDto(id)),
+            totalAmount : calculateTotal(items),
+          });
+    } catch (error) {        
+        console.error("Error adding item to basket:", error);
+        sendResponse(res, 500, { status: false, message: "Internal server error" });
+    }
+};
+
+
+
+exports.getOrderDetails = async (req, res) => {    
+    const orderId= req.params.orderId;
+    if (!orderId) return sendResponse(res, 400, { message: common.HTTP_CODES.BAD_REQUEST });
+    const userId = await authMiddleware.getUserId(req, res);
+    if (!userId) return sendResponse(res, 400, { message: common.HTTP_CODES.BAD_REQUEST });
+    try {        
+        const items = await basketHelper.getBasketOrder(userId, orderId);
         sendResponse(res, 200, 
           {
             status: true,
