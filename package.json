@@ -1,14 +1,8 @@
 {
-  "name": "openfsm-warehouse-service",
+  "name": "WarehouseService",
   "version": "1.0.0",
-  "description": "",
+  "description": "Мискросервис складского учета и движения товаров\r # WarehouseService",
   "main": "app.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "amqplib": "^0.10.4",
     "bcryptjs": "^2.4.3",
@@ -22,7 +16,7 @@
     "openfsm-account-dto": "^1.0.0",
     "openfsm-account-helper": "^1.0.1",
     "openfsm-auth-service-client-handler": "^1.0.3",
-    "openfsm-basket-helper": "^1.0.0",
+    "openfsm-basket-helper": "^1.0.2",
     "openfsm-basket-item-dto": "^1.0.0",
     "openfsm-client-producer-amqp": "^1.0.0",
     "openfsm-common": "^1.0.4",
@@ -39,5 +33,20 @@
     "openfsm-user-helper": "^1.0.1",
     "openfsm-warehouse-helper": "^1.0.0",
     "uuid": "^8.3.2"
-  }
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/itksystem/WarehouseService.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/itksystem/WarehouseService/issues"
+  },
+  "homepage": "https://github.com/itksystem/WarehouseService#readme"
 }

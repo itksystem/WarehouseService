@@ -44,8 +44,7 @@ exports.removeItemFromBasket = async (req, res) => {
 
 exports.addItemToBasket = async (req, res) => {
     const { productId, quantity } = req.body;
-    const userId = await authMiddleware.getUserId(req, res);
-   
+    const userId = await authMiddleware.getUserId(req, res);   
     const validationError = validateRequest(productId, quantity, userId);
     if (validationError) return sendResponse(res, 400, { message: common.HTTP_CODES.BAD_REQUEST  });
     try {
