@@ -78,3 +78,20 @@ exports.productReleaseReservation = async (req, res) => {
   }
 };
 
+
+// 23.11.2024
+// проверить доступность товаров на складе для резервирования
+exports.reservationAvailability = async (req, res) => {
+  let userId = await authMiddleware.getUserId(req, res) ;
+  if (!userId) return res.status(400).json({ message: common.HTTP_CODES.BAD_REQUEST.description });
+  let basketId = await basketHelper.getBasketId(userId)
+  try {
+     let result = await warehouseHelper.productAvailability(basketId);     
+     if(!result) throw('Ошибка при получении информации о состоянии склада');
+     const availabilityStatus = !result.some(item => item.availability === 0);
+     result.availabilityStatus = availabilityStatus
+     res.status(200).json({ result, availabilityStatus });
+  } catch (error) {
+    res.status(500).json({status : false, message: error });
+  }
+};
