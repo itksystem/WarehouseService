@@ -153,3 +153,22 @@ exports.getOrderDetails = async (req, res) => {
         sendResponse(res, 500, { status: false, message: "Internal server error" });
     }
 };
+
+exports.deleteBasketProductItem = async (req, res) => {    
+    const productId= req.params.productId;
+    if (!productId) return sendResponse(res, 400, { message: common.HTTP_CODES.BAD_REQUEST });
+    const userId = await authMiddleware.getUserId(req, res);
+    if (!userId) return sendResponse(res, 400, { message: common.HTTP_CODES.BAD_REQUEST });
+    try {        
+        const result = await basketHelper.productBasketRemove(userId, productId) ;
+        sendResponse(res, 200, 
+          {
+            status: result,
+            productId
+          });
+    } catch (error) {        
+        console.error("Error adding item to basket:", error);
+        sendResponse(res, 500, { status: false, message: "Internal server error" });
+    }
+};
+

@@ -6,11 +6,6 @@ const basketRoutes = require('./routes/basket');
 const app = express();
 app.use(bodyParser.json());
 
-app.use(function(request, response, next){
-  console.log(request);  
-  next();
-});
-
 app.use('/api/warehouse', warehouseRoutes);
 app.use('/api/warehouse', basketRoutes);
 
