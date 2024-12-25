@@ -14,7 +14,15 @@ exports.getProductById = async (req, res) => {
     try {
         const productItem = await warehouseHelper.findProductById(productId);
         if (!productItem)  return res.status(404).json({ message: 'Product not found' });        
-        const product = new ProductDTO(productItem);
+        let product = new ProductDTO(productItem);
+
+        try { // Загружаем медиафайлы для продукта          
+          mediaTtems = await warehouseHelper.findMediaByProductId(product.productId); 
+          product.mediaFiles = mediaTtems.map(id => new MediaImageDto(id))
+        } catch (mediaError) { // Логируем ошибку загрузки медиафайлов, но продолжаем обработку других продуктов          
+          console.error(`Error fetching media for product_id ${item.productId}: ${mediaError.message}`);
+          item.media = [];  // Если ошибка загрузки медиафайлов, оставляем пустой массив
+        }
         res.status(200).json(product);
     } catch (error) {
         console.error('Error fetching product:', error);  // Для логирования ошибки на сервере
