@@ -6,6 +6,16 @@ const CommonFunctionHelper = require("openfsm-common-functions")
 const commonFunction= new CommonFunctionHelper();
 const BasketItemDto   = require('openfsm-basket-item-dto');
 const authMiddleware = require('openfsm-middlewares-auth-service'); // middleware для проверки токена
+
+const MESSAGES        = require('common-warehouse-service').MESSAGES;
+const WarehouseError  = require('openfsm-custom-error');
+const logger          = require('openfsm-logger-handler');
+const LANGUAGE = 'RU';
+const _response= new CommonFunctionHelper();
+const ResponseHelper = require("openfsm-response-helper");
+const response = new ResponseHelper();
+
+
 require('dotenv').config();
 
 
@@ -13,9 +23,12 @@ require('dotenv').config();
 const isValidUUID = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
 const validateRequest = (productId, quantity, userId) => {
-    if (!productId || !isValidUUID(productId)) return "Invalid product ID";
-    if (!quantity || typeof quantity !== "number" || quantity <= 0) return "Invalid quantity";
-    if (!userId ) return "Invalid user ID";
+    if (!productId || !isValidUUID(productId)) 
+        return MESSAGES[LANGUAGE].INPUT_VALIDATION_ERROR;
+    if (!quantity || typeof quantity !== "number" || quantity <= 0) 
+        return MESSAGES[LANGUAGE].INPUT_VALIDATION_ERROR;
+    if (!userId ) 
+        return MESSAGES[LANGUAGE].INPUT_VALIDATION_ERROR;
     return null;
 };
 
@@ -29,16 +42,20 @@ exports.removeItemFromBasket = async (req, res) => {
     const userId = await authMiddleware.getUserId(req, res);
 
     const validationError = validateRequest(productId, quantity, userId);
-    if (validationError) return sendResponse(res, 400, { message: common.HTTP_CODES.BAD_REQUEST });
-    
+    if (validationError)
+        throw new WarehouseError(400, MESSAGES[LANGUAGE].INPUT_VALIDATION_ERROR);     
     try {
         let productCount = await basketHelper.removeItemFromBasket(userId, productId, quantity);
-        if (productCount === null) return sendResponse(res, 404, { status: false, message: "Product not found in basket" });        
-        sendResponse(res, 200, { status: true, basket: { productId, quantity: productCount } });
-
+        if (productCount === null) 
+            throw new WarehouseError(404, MESSAGES[LANGUAGE].ERROR_FETCHING_PRODUCT); 
+        sendResponse(res, 200, { 
+            status: true, 
+            basket: { 
+                productId, 
+                quantity: productCount 
+            } });
     } catch (error) {
-        console.error("Error removing item from basket:", error);
-        sendResponse(res, 500, { status: false, message: "Internal server error" });
+        response.error(req, res, error); 
     }
 };
 
@@ -46,46 +63,48 @@ exports.addItemToBasket = async (req, res) => {
     const { productId, quantity } = req.body;
     const userId = await authMiddleware.getUserId(req, res);   
     const validationError = validateRequest(productId, quantity, userId);
-    if (validationError) return sendResponse(res, 400, { message: common.HTTP_CODES.BAD_REQUEST  });
+    if (validationError) 
+        throw new WarehouseError(400, MESSAGES[LANGUAGE].INPUT_VALIDATION_ERROR);     
     try {
         const productCount = await basketHelper.addItemToBasket(userId, productId, quantity);
-        sendResponse(res, 200, {
-            status: true,
-            basket: { productId, quantity: productCount },
-        });
-    } catch (error) {        
-        console.error("Error adding item to basket:", error);
-        sendResponse(res, 500, { status: false, message: "Internal server error" });
+        if (productCount === null) 
+            throw new WarehouseError(404, MESSAGES[LANGUAGE].ERROR_FETCHING_PRODUCT); 
+        sendResponse(res, 200, { 
+            status: true, 
+            basket: { 
+                productId, 
+                quantity: productCount 
+            },});
+      } catch (error) {                
+        response.error(req, res, error); 
     }
 };
 
-
 function calculateTotal(items) {
-    if (!items|| !Array.isArray(items)) return 0;    
+    if (!items|| !Array.isArray(items)) 
+     return 0;    
     let totalAmount = 0; 
     items.forEach(item => { 
-        if (item.price && item.quantity) {
-            totalAmount += item.price * item.quantity;
-        }
-    });
-  
+     if (item.price && item.quantity) {
+         totalAmount += item.price * item.quantity;
+     }
+    });  
     return totalAmount;
   }
 
 exports.getBasket = async (req, res) => {    
     const userId = await authMiddleware.getUserId(req, res);
-    if (!userId) return sendResponse(res, 400, { message: common.HTTP_CODES.BAD_REQUEST  });
+    if (!userId)  
+      throw new WarehouseError(400, MESSAGES[LANGUAGE].INPUT_VALIDATION_ERROR);     
     try {
         const items = await basketHelper.getBasket(userId);
-        sendResponse(res, 200, 
-          {
-            status: true,
-            basket: items.map(id => new BasketItemDto(id)),
-            totalAmount : calculateTotal(items),
-          });
+        sendResponse(res, 200, { 
+            status: true, 
+            basket: items.map(id => new BasketItemDto(id)), 
+            totalAmount : calculateTotal(items), 
+        });
     } catch (error) {        
-        console.error("Error adding item to basket:", error);
-        sendResponse(res, 500, { status: false, message: "Internal server error" });
+        response.error(req, res, error); 
     }
 };
 
@@ -93,24 +112,22 @@ exports.getBasket = async (req, res) => {
 exports.orderCreate = async (req, res) => {
     const userId = await authMiddleware.getUserId(req, res);
     const {orderId}= req.body;
-    if (!userId) return sendResponse(res, 400,  { message: common.HTTP_CODES.BAD_REQUEST  });
-    if (!orderId) return sendResponse(res, 400, { message: common.HTTP_CODES.BAD_REQUEST  });
+    if (!userId || !orderId) 
+        throw new WarehouseError(400, MESSAGES[LANGUAGE].INPUT_VALIDATION_ERROR);     
     const data = await basketHelper.getBasket(userId );      // создали заказа  
-    if (!data || (data.length == 0) ) {
-            return sendResponse(res, 400, 
-                { success: false, status: 400, error: commonFunction.getDescriptionByCode(400)}
-            );
-    }
+    if (!data || (data.length == 0) )  
+        throw new WarehouseError(400, MESSAGES[LANGUAGE].INPUT_VALIDATION_ERROR);     
     try {
-        const result = await basketHelper.orderCreate(userId, orderId );      // создали заказа  
-        const items  = await basketHelper.getBasketOrder(userId, orderId);    // привязали товары в корзине к заказу        
+        const basketId = await basketHelper.getBasketId(userId)              // Получили корзину
+        const result   = await basketHelper.orderCreate(userId, basketId, orderId);      // создали заказа  
+        const items    = await basketHelper.getBasketOrder(userId, orderId);   // привязали товары в корзине к заказу        
         const itemsWithResered = await Promise.all( // Асинхронно резервируем товары 
             items.map(async (item) => {
               try { 
                 const warehouse  = await warehouseHelper.productReservation(item.productId, item.quantity);                    
                 item.reserved = warehouse;  
               } catch (reservedError) { 
-                console.error(`Error fetching reserved status for product_id ${item.productId}: ${reservedError.message}`);
+                logger.error(`product_id ${item.productId}: ${reservedError.message}`);
                 item.reserved = false;  
               }
               return item;
@@ -119,16 +136,14 @@ exports.orderCreate = async (req, res) => {
         if(!result || !items || !itemsWithResered) return sendResponse(res, 500,
              { success: false, status: 500, error: commonFunction.getDescriptionByCode(error.message)}
             );
-        sendResponse(res, 200, 
-          {
-            status: true,
-            orderId : orderId,
-            items: items.map(id => new BasketItemDto(id)),
-            totalAmount : calculateTotal(items),
-          });
+        sendResponse(res, 200, { 
+            status: true, 
+            orderId : orderId, 
+            items: items.map(id => new BasketItemDto(id)), 
+            totalAmount : calculateTotal(items), 
+        });
     } catch (error) {        
-        console.error("Error adding item to basket:", error);
-        sendResponse(res, 500, { status: false, message: "Internal server error" });
+        response.error(req, res, error); 
     }
 };
 
@@ -149,8 +164,7 @@ exports.getOrderDetails = async (req, res) => {
             totalAmount : calculateTotal(items),
           });
     } catch (error) {        
-        console.error("Error adding item to basket:", error);
-        sendResponse(res, 500, { status: false, message: "Internal server error" });
+        response.error(req, res, error); 
     }
 };
 
@@ -160,15 +174,13 @@ exports.deleteBasketProductItem = async (req, res) => {
     const userId = await authMiddleware.getUserId(req, res);
     if (!userId) return sendResponse(res, 400, { message: common.HTTP_CODES.BAD_REQUEST });
     try {        
-        const result = await basketHelper.productBasketRemove(userId, productId) ;
-        sendResponse(res, 200, 
-          {
-            status: result,
-            productId
-          });
+      const result = await basketHelper.productBasketRemove(userId, productId) ;
+      sendResponse(res, 200, {
+         status: result, 
+         productId
+        });
     } catch (error) {        
-        console.error("Error adding item to basket:", error);
-        sendResponse(res, 500, { status: false, message: "Internal server error" });
+        response.error(req, res, error); 
     }
 };
 
