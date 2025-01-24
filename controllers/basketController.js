@@ -150,11 +150,10 @@ exports.orderCreate = async (req, res) => {
 
 
 exports.getOrderDetails = async (req, res) => {    
-    const orderId= req.params.orderId;
-    if (!orderId) return sendResponse(res, 400, { message: common.HTTP_CODES.BAD_REQUEST });
-    const userId = await authMiddleware.getUserId(req, res);
-    if (!userId) return sendResponse(res, 400, { message: common.HTTP_CODES.BAD_REQUEST });
     try {        
+        const orderId= req.params.orderId;
+        const userId = await authMiddleware.getUserId(req, res);
+        if (!orderId || !userId) return sendResponse(res, 400, { message: common.HTTP_CODES.BAD_REQUEST });
         const items = await basketHelper.getBasketOrder(userId, orderId);
         sendResponse(res, 200, 
           {
