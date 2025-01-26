@@ -77,7 +77,7 @@ exports.getProductsByCategories = async (req, res) => {
           item.mediaFiles  = mediaTtems.map(id => new MediaImageDto(id))
           basketCount      = await basketHelper.getProductCountInBasket(userId, item.productId)
           item.basketCount = basketCount;
-        } catch (mediaError) { // Логируем ошибку загрузки медиафайлов, но продолжаем обработку других продуктов          
+        } catch (error) { // Логируем ошибку загрузки медиафайлов, но продолжаем обработку других продуктов          
           logger.error(`${MESSAGES[LANGUAGE].ERROR_FETCHING_MEDIA} ${item.productId}: ${error.message}`);
           item.media = [];  // Если ошибка загрузки медиафайлов, оставляем пустой массив
         }
