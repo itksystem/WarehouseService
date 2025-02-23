@@ -1,5 +1,5 @@
 ﻿const jwt = require('jsonwebtoken');
-require('dotenv').config();
+require('dotenv').config({ path: '.env-warehouse-service' });
 // Объявляем черный список токенов
 const tokenBlacklist = new Set();  // по хорошему стоит хранить их в отдельном хранилище, чтобы не потерять при перезагрузке приложения. Например в BD или в redis
 const NO_AUTH_MSG = 'Токен недействителен. Необходима авторизация в системе.' ;

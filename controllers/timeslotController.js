@@ -1,6 +1,6 @@
 const db = require('../config');
 const { v4: uuidv4 } = require('uuid'); 
-require('dotenv').config();
+require('dotenv').config({ path: '.env-warehouse-service' });
 
 
 const timeslotController = {

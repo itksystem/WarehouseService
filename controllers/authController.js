@@ -13,7 +13,7 @@ const WELCOME_EMAIL_TEMPLATE = 'WELCOME_EMAIL_TEMPLATE';
 const tokenExpiredTime = '3h'; // Время жизни токена
 const pool = require('openfsm-database-connection-producer');
 const MailNotificationProducer  =  require('openfsm-mail-notification-producer'); // ходим в почту через шину
-require('dotenv').config();
+require('dotenv').config({ path: '.env-warehouse-service' });
 const version = '1.0.0'
 const { DateTime } = require('luxon');
 

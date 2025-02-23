@@ -15,7 +15,7 @@ const ResponseHelper = require("openfsm-response-helper");
 const response = new ResponseHelper();
 
 
-require('dotenv').config();
+require('dotenv').config({ path: '.env-warehouse-service' });
 
 /*
  Поиск продукта по его идентификатору ID
