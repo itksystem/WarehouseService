@@ -150,7 +150,7 @@ exports.reservationAvailability = async (req, res) => {
     throw new WarehouseError(400, MESSAGES[LANGUAGE].INPUT_VALIDATION_ERROR); 
   let basketId = await basketHelper.getBasketId(userId)
   try {
-     let result = await warehouseHelper.productAvailability(basketId);     
+     let result = await warehouseHelper.getBasketProductsAvailability(basketId);     
      if(!result) 
       throw new WarehouseError(400, MESSAGES[LANGUAGE].ERROR_FETCHING_WAREHOUSE);       
       const availabilityStatus = !result.some(item => item.availability === 0);
