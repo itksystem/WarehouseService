@@ -73,18 +73,21 @@ exports.addItemToBasket = async (req, res) => {
 
         // Валидация входных данных
         const validationError = validateRequest(productId, quantity, userId);
+        console.log(`validationError =>`,validationError)
         if (validationError) {
             throw new WarehouseError(400, MESSAGES[LANGUAGE].INPUT_VALIDATION_ERROR);
         }
 
         // Проверка доступного количества товара на складе
         const availableQuantity = await basketHelper.getWarehouseProductCount(productId);
+        console.log(`availableQuantity =>`,availableQuantity)
         if (availableQuantity === 0) {
             throw new WarehouseError(422, MESSAGES[LANGUAGE].PRODUCT_UNAVAILABLE);
         }
-
+        
         // Добавление товара в корзину
         const productCount = await basketHelper.addItemToBasket(userId, productId, quantity);
+        console.log(`productCount =>`,productCount)
         if (productCount === null) {
             throw new WarehouseError(404, MESSAGES[LANGUAGE].ERROR_FETCHING_PRODUCT);
         }
@@ -113,29 +116,6 @@ exports.addItemToBasket = async (req, res) => {
         return total + price * quantity;
     }, 0);
 }
-
-
-
-exports.getBasket = async (req, res) => {    
-    try {
-        const userId = await authMiddleware.getUserId(req, res);
-        if (!userId) {
-            throw new WarehouseError(400, MESSAGES[LANGUAGE].INPUT_VALIDATION_ERROR);
-        }
-
-        const items = await basketHelper.getBasket(userId) || [];
-        
-        sendResponse(res, 200, { 
-            status: true, 
-            basket: items.map(item => new BasketItemDto(item)), 
-            totalAmount: calculateTotal(items), 
-        });
-
-    } catch (error) {        
-        logger.error(`Ошибка при получении корзины пользователя: ${error.message}`);
-        response.error(req, res, error);
-    }
-};
 
 
 
@@ -221,6 +201,26 @@ exports.orderCreate = async (req, res) => {
     }
 };
 
+exports.getBasket = async (req, res) => {    
+    try {
+        const userId = await authMiddleware.getUserId(req, res);
+        if (!userId) {
+            throw new WarehouseError(400, MESSAGES[LANGUAGE].INPUT_VALIDATION_ERROR);
+        }
+
+        const items = await basketHelper.getBasket(userId) || [];
+        
+        sendResponse(res, 200, { 
+            status: true, 
+            basket: items.map(id => new BasketItemDto(id)),
+            totalAmount: calculateTotal(items), 
+        });
+
+    } catch (error) {        
+        logger.error(`Ошибка при получении корзины пользователя: ${error.message}`);
+        response.error(req, res, error);
+    }
+};
 
 
 exports.getOrderDetails = async (req, res) => {    
@@ -240,7 +240,7 @@ exports.getOrderDetails = async (req, res) => {
           {
             status: true,
             orderId : orderId,
-            items: items.map(id => new BasketItemDto(id)),
+            items : items.map(id => new BasketItemDto(id)),
             totalAmount : calculateTotal(items),
           });
     } catch (error) {        
