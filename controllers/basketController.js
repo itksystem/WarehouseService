@@ -10,13 +10,11 @@ const LANGUAGE = 'RU';
 const ResponseHelper = require("openfsm-response-helper");
 const response = new ResponseHelper();
 const logger          = require('openfsm-logger-handler');
-
+const ClientProducerAMQP  =  require('openfsm-client-producer-amqp'); // ходим в почту через шину
+const amqp = require('amqplib');
 require('dotenv').config({ path: '.env-warehouse-service' });
 
-
-
 const isValidUUID = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
-
 const validateRequest = (productId, quantity, userId) => {
     if (!isValidUUID(productId)) 
         return MESSAGES[LANGUAGE].INPUT_VALIDATION_ERROR;
