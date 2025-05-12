@@ -2,7 +2,7 @@
 const basketHelper = require('openfsm-basket-helper');
 const warehouseHelper = require('openfsm-warehouse-helper');
 const common       = require('openfsm-common');  /* Библиотека с общими параметрами */
-const BasketItemDto   = require('openfsm-basket-item-dto');
+const BasketItemDto  = require('openfsm-basket-item-dto');
 const authMiddleware = require('openfsm-middlewares-auth-service'); // middleware для проверки токена
 const WarehouseError  = require('openfsm-custom-error');
 const MESSAGES        = require('common-warehouse-service').MESSAGES;
@@ -66,13 +66,15 @@ exports.removeItemFromBasket = async (req, res) => {
 
 exports.addItemToBasket = async (req, res) => {
     try {
+
         const { productId, quantity } = req.body;
         const userId = await authMiddleware.getUserId(req, res);
 
         // Валидация входных данных
-        const validationError = validateRequest(productId, quantity, userId);
-        console.log(`validationError =>`,validationError)
-        if (validationError) {
+        // const validationError = validateRequest(productId, quantity, userId);
+        console.log(`validationError =>`, req)
+         console.log(`validationError =>`,productId,quantity,userId)
+        if (!productId || !quantity || !userId) {
             throw new WarehouseError(400, MESSAGES[LANGUAGE].INPUT_VALIDATION_ERROR);
         }
 
