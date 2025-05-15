@@ -61,12 +61,12 @@ exports.getProductById = async (req, res) => {
    500 - серверная ошибка
 */
 exports.getProductsByCategories = async (req, res) => {
-  let  categories = req.body.categories;  
+  let { categories, page, limit} = req.body;  
   let userId = await authMiddleware.getUserId(req, res);
   if (!Array.isArray(categories) || categories.length === 0)  
     categories = null;  
   try {   
-    const items = await warehouseHelper.findProductsByCategories(categories);  // Получаем список продуктов по категориям
+    const items = await warehouseHelper.findProductsByCategories(categories,page,limit);  // Получаем список продуктов по категориям
     let poducts = items.map(id => new ProductDTO(id))
     const itemsWithMedia = await Promise.all( 
      // Асинхронно загружаем медиафайлы для каждого продукта
@@ -75,7 +75,7 @@ exports.getProductsByCategories = async (req, res) => {
         // Загружаем медиафайлы для продукта          
           mediaTtems       = await warehouseHelper.findMediaByProductId(item.productId); 
           item.mediaFiles  = mediaTtems.map(id => new MediaImageDto(id))
-          basketCount      = await basketHelper.getProductCountInBasket(userId, item.productId)
+          basketCount      = await basketHelper.getProductCountInBasket(userId, item.productId);
           item.basketCount = basketCount;
         } catch (error) { // Логируем ошибку загрузки медиафайлов, но продолжаем обработку других продуктов          
           logger.error(`${MESSAGES[LANGUAGE].ERROR_FETCHING_MEDIA} ${item.productId}: ${error.message}`);
