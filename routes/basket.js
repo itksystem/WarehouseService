@@ -10,6 +10,7 @@ router.post('/v1/basket/order-create', authMiddleware.authenticateToken, basket.
 router.delete('/v1/basket/item/:productId', authMiddleware.authenticateToken, basket.deleteBasketProductItem); // Удалить позицию из корзины
 router.get('/v1/basket', authMiddleware.authenticateToken, basket.getBasket); // Корзина
 router.get('/v1/order/:orderId/details', authMiddleware.authenticateToken, basket.getOrderDetails); // Корзина
+router.post('/v1/order/product-remove', authMiddleware.authenticateToken, basket.removeOrderItem); // Корзина
 
 
 module.exports = router;

@@ -264,3 +264,20 @@ exports.deleteBasketProductItem = async (req, res) => {
     }
 };
 
+exports.removeOrderItem = async (req, res) => {    
+    const {orderId, productId} = req.body;
+    const userId = await authMiddleware.getUserId(req, res);
+    const basketId = await basketHelper.getBasketId(userId);    
+    if (!basketId || !orderId || !productId || !userId) 
+        throw(400);
+    try {        
+      const result = await basketHelper.removeOrderItem(basketId, orderId, productId) ;
+      sendResponse(res, 200, { status: result, orderId, productId });
+    } catch (error) {        
+        response.error(req, res, error); 
+    }
+};
+
+
+
+
