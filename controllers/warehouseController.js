@@ -61,12 +61,12 @@ exports.getProductById = async (req, res) => {
    500 - серверная ошибка
 */
 exports.getProductsByCategories = async (req, res) => {
-  let { categories, page, limit} = req.body;  
+  let { categories, page, limit, search} = req.body;  
   let userId = await authMiddleware.getUserId(req, res);
   if (!Array.isArray(categories) || categories.length === 0)  
     categories = null;  
   try {   
-    const items = await warehouseHelper.findProductsByCategories(categories,page,limit);  // Получаем список продуктов по категориям
+    const items = await warehouseHelper.findProductsByCategories(categories,page,limit,search);  // Получаем список продуктов по категориям
     let poducts = items.map(id => new ProductDTO(id))
     const itemsWithMedia = await Promise.all( 
      // Асинхронно загружаем медиафайлы для каждого продукта
