@@ -87,6 +87,12 @@ exports.getProductsByCategories = async (req, res) => {
         return item;
       })
     );    
+    try {
+        warehouseHelper.registerSearchQueriesProducer({text : search});  
+    } catch (error) {
+      console.log(error)
+    }
+    
     res.status(200).json(itemsWithMedia); // Отправляем ответ с продуктами и медиафайлами
   } catch (error) {
     response.error(req, res, error); 
@@ -160,6 +166,38 @@ exports.reservationAvailability = async (req, res) => {
       result.availabilityStatus = availabilityStatus
       res.status(200).json({ result, availabilityStatus });
   } catch (error) {    
+    response.error(req, res, error); 
+  }
+};
+
+/*
+ Получение справочника категорий товаров
+ @input req/req - 
+ @output array catogories
+   200 - создан
+   400 - оршибка данных
+   422 - ошибка процесса
+   500 - серверная ошибка
+*/
+
+exports.getProductCategories = async (req, res) => {  
+  try {
+    const categories = await warehouseHelper.getProductCategories();
+    console.log(`getProductCategories`,categories);
+    if (!categories)  throw new WarehouseError(500, MESSAGES[LANGUAGE].ERROR_FETCHING_WAREHOUSE ); 
+    res.status(200).json({status : true, categories});
+  } catch (error) {         
+    response.error(req, res, error); 
+  }
+};
+
+exports.getProductBrands = async (req, res) => {  
+  try {
+    const brands = await warehouseHelper.getProductBrands();
+    console.log(`getProductBrands`,brands);
+    if (!brands)  throw new WarehouseError(500, MESSAGES[LANGUAGE].ERROR_FETCHING_WAREHOUSE ); 
+    res.status(200).json({status : true, brands});
+  } catch (error) {         
     response.error(req, res, error); 
   }
 };
