@@ -108,8 +108,9 @@ exports.getProductsByCategories = async (req, res) => {
       })
     );    
     try {
-        warehouseHelper.registerSearchQueriesProducer({text : search});  
-    } catch (error) {
+        if(search)
+            warehouseHelper.registerSearchQueriesProducer({text : search?.toLowerCase()});  
+         } catch (error) {
       console.log(error)
     }
     
@@ -210,6 +211,21 @@ exports.getProductCategories = async (req, res) => {
     response.error(req, res, error); 
   }
 };
+
+
+exports.getSearchQueries = async (req, res) => {  
+  try {
+    let {query} = req.body;
+    const queries = await warehouseHelper.getSearchQueries(query);
+    console.log(`getSearchQueries`,queries);
+    if (!queries)  throw new WarehouseError(500, MESSAGES[LANGUAGE].ERROR_FETCHING_WAREHOUSE ); 
+    res.status(200).json({status : true, queries});
+  } catch (error) {         
+    response.error(req, res, error); 
+  }
+};
+
+
 
 exports.getProductBrands = async (req, res) => {  
   try {
