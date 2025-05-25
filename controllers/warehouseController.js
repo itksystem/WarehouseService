@@ -61,14 +61,34 @@ exports.getProductById = async (req, res) => {
    500 - серверная ошибка
 */
 exports.getProductsByCategories = async (req, res) => {
-  let { categories, page, limit, search} = req.body;  
-  let userId = await authMiddleware.getUserId(req, res);
-  if (!Array.isArray(categories) || categories.length === 0)  
+//  let { categories, page, limit, search} = req.body;  
+  let { filters, page, limit, search} = req.body;  
+  let userId = await authMiddleware.getUserId(req, res);  
+  let categories = null;
+  let brands = null;
+  let minPrice = null;
+  let maxPrice = null;
+  search = search.trim() !== '' ? search.trim() : null;
+  try {
+      categories = filters?.categories ?? null;
+      brands = filters?.brands ?? null;
+      minPrice = filters?.minPrice ?? null;
+      maxPrice = filters?.maxPrice ?? null;
+    } catch (error) {
+      console.log(`_filters not JSON`);    
+  }
+  if (!Array.isArray(categories) || categories.length === 0)   
     categories = null;  
+  if (!Array.isArray(brands) || brands.length === 0)   
+    brands = null;  
   try {   
-    let  items = await warehouseHelper.findProductsByCategories(categories,page,limit,search);  // Получаем список продуктов по категориям
+    let  items = await warehouseHelper.
+      findProductsByCategories(brands, categories, page, limit, search, minPrice, maxPrice);  // Получаем список продуктов по категориям
+
     if(items.length == 0) // если не нашли смотрим через Like
-      items = await warehouseHelper.findProductsByCategoriesByLike(categories,page,limit,search);  // Получаем список продуктов по категориям
+      items = await warehouseHelper.
+      findProductsByCategoriesByLike(brands, categories, page, limit, search, minPrice, maxPrice);  // Получаем список продуктов по категориям
+
       
     let poducts = items.map(id => new ProductDTO(id))
     const itemsWithMedia = await Promise.all( 
