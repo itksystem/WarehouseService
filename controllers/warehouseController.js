@@ -68,7 +68,7 @@ exports.getProductsByCategories = async (req, res) => {
   let brands = null;
   let minPrice = null;
   let maxPrice = null;
-  search = search.trim() !== '' ? search.trim() : null;
+  search = search?.trim() !== '' ? search?.trim() : null;
   try {
       categories = filters?.categories ?? null;
       brands = filters?.brands ?? null;
